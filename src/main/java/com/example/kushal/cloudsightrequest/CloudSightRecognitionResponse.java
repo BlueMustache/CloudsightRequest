@@ -50,4 +50,12 @@ public class CloudSightRecognitionResponse {
     public boolean isTimedOut() {
         return status.equalsIgnoreCase("timeout");
     }
+
+    public boolean isCompleted() {
+        return status.equalsIgnoreCase("completed");
+    }
+
+    public boolean isSkipped() {
+        return status.equalsIgnoreCase("skipped");
+    }
 }

@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 
+import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Headers;
 import okhttp3.MediaType;
@@ -23,18 +24,19 @@ import okio.Source;
 public class DataManager {
     private OkHttpClient client;
     private CloudSightUpload uploadBody;
-
+    private Call call;
     public DataManager() {
         client = new OkHttpClient();
+        call = null;
     }
 
-    public void uploadImageFile(CloudSightUpload.ProgressListener listener,
-                                CloudSightRequestModel model,
-                                Callback responseCallback) {
+    public void uploadImageFile(CloudSightRequestModel model,
+                                Callback responseCallback,
+                                CloudSightUpload.ProgressListener listener) {
         MultipartBody.Builder bodyBuilder = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM);
         if (model.getImage() != null) {
-            uploadBody = new CloudSightUpload(MediaType.parse("image/*"), model.getImage(), listener);
+            uploadBody = new CloudSightUpload(MediaType.parse(model.getMediaType()), model.getImage(), listener);
             bodyBuilder.addPart(
                     Headers.of("Content-Disposition", "form-data; name=\"image_request[image]\""
                             + "; filename=\"" + model.getImage().getName() + "\""), uploadBody);
@@ -52,7 +54,8 @@ public class DataManager {
                 .post(body)
                 .build();
 
-        client.newCall(request).enqueue(responseCallback);
+        call = client.newCall(request);
+        call.enqueue(responseCallback);
     }
 
     public void getImageResponse(CloudSightRequestModel model, Callback callback) {
@@ -60,14 +63,26 @@ public class DataManager {
                 .addHeader("Authorization", model.getAuthorizationHeader())
                 .url(model.getUrl())
                 .build();
-        client.newCall(request).enqueue(callback);
+        call = client.newCall(request);
+        call.enqueue(callback);
+    }
+
+    public void cancel() {
+        if (call != null) {
+            call.cancel();
+            call = null;
+        }
+    }
+
+    public void setProgressListener(CloudSightUpload.ProgressListener progressListener) {
+        uploadBody.listener = progressListener;
     }
 
     public static class CloudSightUpload extends RequestBody {
         private static final long SEGMENT_SIZE = 2048;
         private final MediaType mediaType;
         private final File file;
-        private final ProgressListener listener;
+        ProgressListener listener;
 
         public CloudSightUpload(MediaType mediaType, File file,
                                 @Nullable ProgressListener progressListener) {

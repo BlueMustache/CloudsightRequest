@@ -28,13 +28,17 @@ public class CloudSightRequestModel {
     private String url;
     private CloudSightOAuth1 oAuth1;
     private boolean isRepost;
+    private String mediaType;
 
-    public CloudSightRequestModel(File image, String remoteImageUrl, Locale locale,
+    public CloudSightRequestModel(File image, String remoteImageUrl,
+                                  String mediaType,
+                                  Locale locale,
                                   CloudSightOAuth1 oAuth1) {
         if (image == null && remoteImageUrl == null) {
             throw new IllegalArgumentException("Requires either a file or a remote image url");
         }
         this.oAuth1 = oAuth1;
+        this.mediaType = mediaType;
         params = new HashMap<>();
         this.locale = locale;
         this.image = image;
@@ -88,5 +92,9 @@ public class CloudSightRequestModel {
 
     public void setRepost() {
         isRepost = true;
+    }
+
+    public String getMediaType() {
+        return mediaType;
     }
 }
